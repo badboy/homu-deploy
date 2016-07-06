@@ -1,0 +1,9 @@
+#!/bin/bash
+
+set -e
+
+cd {{deploydir}}
+cd ..
+. .venv/bin/activate
+cd {{deploydir}}
+exec homu

@@ -1,0 +1,12 @@
+[Unit]
+Description=A bot that integrates with GitHub and your favorite continuous integration service
+After=network.target
+
+[Service]
+Type=simple
+User={{deployuser}}
+PIDFile=/run/homu.pid
+ExecStart={{deploydir}}/homu.sh
+
+[Install]
+WantedBy=multi-user.target

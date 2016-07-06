@@ -1,0 +1,16 @@
+---
+deployuser: ubuntu
+deploydir: /home/{{deployuser}}/where-to-check-out
+homu:
+  host: "127.0.0.1"
+  port: 54856
+  access_token: "personal-access-token"
+  app_client_id: "oauth-client-id"
+  app_client_secret: "oauth-client-secret"
+  repositories:
+
+    - owner: owner
+      name: repo-name
+      reviewers: ["owner"]
+      try_users: []
+      secret: "openssl rand -hex 20"

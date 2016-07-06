@@ -1,0 +1,27 @@
+[github]
+access_token = "{{homu['access_token']}}"
+app_client_id = "{{homu['app_client_id']}}"
+app_client_secret = "{{homu['app_client_secret']}}"
+
+[git]
+#local_git = false
+#ssh_key = """
+#"""
+
+[web]
+host = "{{homu['host']}}"
+port = {{homu['port']}}
+
+{% for repo in homu['repositories'] %}
+[repo."{{repo['owner']}}/{{repo['name']}}"]
+owner = "{{repo['owner']}}"
+name = "{{repo['name']}}"
+reviewers = {{repo['reviewers'] | to_json}}
+try_users = {{repo['try_users'] | to_json}}
+
+[repo."{{repo['owner']}}/{{repo['name']}}".github]
+secret = "{{repo['secret']}}"
+
+[repo."{{repo['owner']}}/{{repo['name']}}".status.travis]
+context = "continuous-integration/travis-ci/push"
+{% endfor %}

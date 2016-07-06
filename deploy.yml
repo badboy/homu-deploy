@@ -1,0 +1,65 @@
+---
+- hosts: homu
+  become: yes
+  vars_files:
+    - vars.yml
+
+  tasks:
+
+    - name: Install packages
+      apt: name={{item}} state=present update_cache=yes
+      with_items:
+        - git
+        - python3
+        - python3-wheel
+        - python3-venv
+        - nginx
+
+    - name: Deploy nginx.conf
+      copy: src=nginx.conf dest=/etc/nginx/nginx.conf mode=0644 owner=root group=root
+      register: nginx_conf
+
+    - name: Restart nginx
+      service: name=nginx enabled=yes state=restarted
+      when: nginx_conf.changed
+
+    - name: Deploy Homu Service
+      template: src=homu.service.j2 dest=/etc/systemd/system/homu.service
+      register: homu_service
+
+    - name: Checkout homu
+      git: repo=https://github.com/servo/homu
+           accept_hostkey=yes
+           dest={{deploydir}}
+           version=master
+      become: no
+      register: gitcheckout
+
+    - name: Test for virtualenv
+      stat: path={{deploydir}}/../.venv
+      register: venv
+
+    - name: Create virtualenv
+      command: pyvenv .venv chdir={{deploydir}}/../
+      become: no
+      when: venv.stat.exists == False
+
+    - name: Install homu
+      shell: cd {{deploydir}}/.. && . .venv/bin/activate && pip install -e homu
+      become: no
+      when: gitcheckout.changed
+
+    - name: Homu Launcher
+      template: src=homu.sh.j2 dest={{deploydir}}/homu.sh owner={{deployuser}} group={{deployuser}} mode=0755
+
+    - name: Homu config
+      template: src=homu-cfg.toml.j2 dest={{deploydir}}/cfg.toml owner={{deployuser}} group={{deployuser}} mode=0644
+      register: homu_config
+
+    - name: Enable Homu
+      service: name=homu enabled=yes
+      when: homu_service.changed
+
+    - name: Restart Homu
+      service: name=homu state=restarted
+      when: gitcheckout.changed or homu_config.changed or homu_service.changed
